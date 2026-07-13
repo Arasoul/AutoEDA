@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # Variable classification
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class VariableInfo:
     """Semantic classification of a single column.
@@ -104,9 +105,8 @@ def classify_variables(
         # Detect text: object/string with high unique ratio and long values
         is_text = False
         if (
-            (pd.api.types.is_object_dtype(series) or isinstance(series.dtype, pd.StringDtype))
-            and count > 0
-        ):
+            pd.api.types.is_object_dtype(series) or isinstance(series.dtype, pd.StringDtype)
+        ) and count > 0:
             avg_len = non_null.astype(str).str.len().mean()
             if (
                 unique_ratio > cfg.text_unique_ratio_threshold
@@ -136,9 +136,8 @@ def classify_variables(
         elif pd.api.types.is_datetime64_any_dtype(series):
             semantic = "datetime"
             role = "temporal"
-        elif (
-            pd.api.types.is_object_dtype(series)
-            or isinstance(series.dtype, (pd.CategoricalDtype, pd.StringDtype))
+        elif pd.api.types.is_object_dtype(series) or isinstance(
+            series.dtype, (pd.CategoricalDtype, pd.StringDtype)
         ):
             semantic = "categorical"
             role = "feature"
@@ -146,22 +145,25 @@ def classify_variables(
             semantic = "other"
             role = "review"
 
-        results.append(VariableInfo(
-            column=col,
-            dtype=dtype_str,
-            semantic_type=semantic,
-            n_unique=n_unique,
-            unique_ratio=round(unique_ratio, 4),
-            is_constant=is_constant,
-            is_identifier=is_identifier,
-            suggested_role=role,
-        ))
+        results.append(
+            VariableInfo(
+                column=col,
+                dtype=dtype_str,
+                semantic_type=semantic,
+                n_unique=n_unique,
+                unique_ratio=round(unique_ratio, 4),
+                is_constant=is_constant,
+                is_identifier=is_identifier,
+                suggested_role=role,
+            )
+        )
     return results
 
 
 # ---------------------------------------------------------------------------
 # Dataset Health Score
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class HealthScore:
@@ -280,10 +282,7 @@ def compute_health_score(
     analysis_readiness = min(100, readiness_score)
 
     overall = round(
-        completeness * 0.3
-        + uniqueness * 0.2
-        + consistency * 0.2
-        + analysis_readiness * 0.3
+        completeness * 0.3 + uniqueness * 0.2 + consistency * 0.2 + analysis_readiness * 0.3
     )
     overall = max(0, min(100, overall))
 
@@ -311,6 +310,7 @@ def compute_health_score(
 # ---------------------------------------------------------------------------
 # Per-column result dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class NumericalColumnStats:
@@ -410,6 +410,7 @@ class DatasetProfile:
 # Profiler
 # ---------------------------------------------------------------------------
 
+
 class DataProfiler:
     """Produce a :class:`DatasetProfile` from a cleaned DataFrame.
 
@@ -444,14 +445,8 @@ class DataProfiler:
         variables = classify_variables(df, self.config)
         health = compute_health_score(df, variables, self.config)
 
-        num_stats = [
-            self._profile_numerical(df, col)
-            for col in col_types["numeric"]
-        ]
-        cat_stats = [
-            self._profile_categorical(df, col)
-            for col in col_types["categorical"]
-        ]
+        num_stats = [self._profile_numerical(df, col) for col in col_types["numeric"]]
+        cat_stats = [self._profile_categorical(df, col) for col in col_types["categorical"]]
 
         dup_count = int(df.duplicated().sum())
         n_rows = len(df)
@@ -480,12 +475,17 @@ class DataProfiler:
 
         logger.info(
             "Profiling complete: %d numerical, %d categorical, health=%d/100 (%s)",
-            len(num_stats), len(cat_stats), health.overall, health.label,
+            len(num_stats),
+            len(cat_stats),
+            health.overall,
+            health.label,
         )
         return profile
 
     def _profile_numerical(
-        self, df: pd.DataFrame, col: str,
+        self,
+        df: pd.DataFrame,
+        col: str,
     ) -> NumericalColumnStats:
         """Compute descriptive statistics for one numeric column."""
         s = df[col].dropna()
@@ -504,23 +504,36 @@ class DataProfiler:
         n_zeros = int((s == 0).sum())
 
         return NumericalColumnStats(
-            column=col, dtype=str(df[col].dtype),
-            count=count, missing=missing, missing_pct=missing_pct,
-            mean=safe_mean(s), median=safe_median(s), std=safe_std(s),
-            min=safe_min(s), q25=q25,
+            column=col,
+            dtype=str(df[col].dtype),
+            count=count,
+            missing=missing,
+            missing_pct=missing_pct,
+            mean=safe_mean(s),
+            median=safe_median(s),
+            std=safe_std(s),
+            min=safe_min(s),
+            q25=q25,
             q50=float(s.quantile(0.50)) if count else float("nan"),
-            q75=q75, max=safe_max(s),
-            skewness=safe_skew(s), kurtosis=safe_kurtosis(s),
-            n_unique=int(s.nunique()), n_zeros=n_zeros,
+            q75=q75,
+            max=safe_max(s),
+            skewness=safe_skew(s),
+            kurtosis=safe_kurtosis(s),
+            n_unique=int(s.nunique()),
+            n_zeros=n_zeros,
             zero_pct=round(n_zeros / count * 100, 2) if count else 0.0,
             range=(safe_max(s) - safe_min(s)) if count else float("nan"),
-            iqr=iqr, outlier_lower=outlier_lower, outlier_upper=outlier_upper,
+            iqr=iqr,
+            outlier_lower=outlier_lower,
+            outlier_upper=outlier_upper,
             n_outliers=n_outliers,
             outlier_pct=round(n_outliers / count * 100, 2) if count else 0.0,
         )
 
     def _profile_categorical(
-        self, df: pd.DataFrame, col: str,
+        self,
+        df: pd.DataFrame,
+        col: str,
     ) -> CategoricalColumnStats:
         """Compute descriptive statistics for one categorical column."""
         s = df[col]
@@ -543,9 +556,15 @@ class DataProfiler:
             values = {}
 
         return CategoricalColumnStats(
-            column=col, dtype=str(df[col].dtype),
-            count=int(non_null.count()), missing=missing, missing_pct=missing_pct,
+            column=col,
+            dtype=str(df[col].dtype),
+            count=int(non_null.count()),
+            missing=missing,
+            missing_pct=missing_pct,
             n_unique=n_unique,
             unique_ratio=round(n_unique / len(non_null), 4) if len(non_null) else 0.0,
-            top_value=top_value, top_freq=top_freq, top_pct=top_pct, values=values,
+            top_value=top_value,
+            top_freq=top_freq,
+            top_pct=top_pct,
+            values=values,
         )

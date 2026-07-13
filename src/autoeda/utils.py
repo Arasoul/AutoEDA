@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 # DataFrame helpers
 # ---------------------------------------------------------------------------
 
+
 def validate_dataframe(df: pd.DataFrame) -> None:
     """Raise :class:`TypeError` or :class:`ValueError` for invalid input.
 
@@ -62,9 +63,8 @@ def identify_column_types(
             result["numeric"].append(col)
         elif pd.api.types.is_datetime64_any_dtype(dtype):
             result["datetime"].append(col)
-        elif (
-            pd.api.types.is_object_dtype(dtype)
-            or isinstance(dtype, (pd.CategoricalDtype, pd.StringDtype))
+        elif pd.api.types.is_object_dtype(dtype) or isinstance(
+            dtype, (pd.CategoricalDtype, pd.StringDtype)
         ):
             result["categorical"].append(col)
         else:
@@ -75,6 +75,7 @@ def identify_column_types(
 # ---------------------------------------------------------------------------
 # Safe statistical computations
 # ---------------------------------------------------------------------------
+
 
 def safe_mean(series: pd.Series) -> float:  # type: ignore[type-arg]
     """Compute mean, returning NaN on failure."""
@@ -144,6 +145,7 @@ def safe_max(series: pd.Series) -> float:  # type: ignore[type-arg]
 # Formatting helpers
 # ---------------------------------------------------------------------------
 
+
 def format_number(value: float, decimals: int = 2) -> str:
     """Format a number for display in tables and reports.
 
@@ -212,16 +214,24 @@ def compute_missing_summary(df: pd.DataFrame) -> pd.DataFrame:
     missing = df.isna().sum()
     missing_count = missing.to_numpy().astype(int)
     missing_pct = np.round(
-        np.where(total > 0, missing_count / total * 100, 0.0), 2,
+        np.where(total > 0, missing_count / total * 100, 0.0),
+        2,
     )
-    result = pd.DataFrame({
-        "column": missing.index,
-        "missing_count": missing_count,
-        "missing_pct": missing_pct,
-    })
-    return result[result["missing_count"] > 0].sort_values(
-        "missing_count", ascending=False,
-    ).reset_index(drop=True)
+    result = pd.DataFrame(
+        {
+            "column": missing.index,
+            "missing_count": missing_count,
+            "missing_pct": missing_pct,
+        }
+    )
+    return (
+        result[result["missing_count"] > 0]
+        .sort_values(
+            "missing_count",
+            ascending=False,
+        )
+        .reset_index(drop=True)
+    )
 
 
 def compute_memory_usage(df: pd.DataFrame) -> int:

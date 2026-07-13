@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 # Result dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class FigureResult:
     """Metadata for a single generated figure."""
@@ -90,6 +91,7 @@ class VisualizationResult:
 # ---------------------------------------------------------------------------
 # Visualiser
 # ---------------------------------------------------------------------------
+
 
 class Visualization:
     """Generate publication-quality figures for an EDA pipeline.
@@ -160,7 +162,15 @@ class Visualization:
         fig_dir.mkdir(parents=True, exist_ok=True)
         return fig_dir
 
-    def _save(self, fig: plt.Figure, name: str, result: VisualizationResult, category: str, title: str, desc: str) -> None:
+    def _save(
+        self,
+        fig: plt.Figure,
+        name: str,
+        result: VisualizationResult,
+        category: str,
+        title: str,
+        desc: str,
+    ) -> None:
         """Save a figure and append to the result list."""
         filename = f"{name}.png"
         path: Path | None = None
@@ -170,8 +180,11 @@ class Visualization:
         plt.close(fig)
 
         entry = FigureResult(
-            title=title, description=desc,
-            category=category, path=path, filename=filename,
+            title=title,
+            description=desc,
+            category=category,
+            path=path,
+            filename=filename,
         )
         getattr(result, category).append(entry)
 
@@ -198,7 +211,8 @@ class Visualization:
         n = len(num_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -206,18 +220,34 @@ class Visualization:
 
         for i, col in enumerate(num_cols):
             ax = axes_arr[i]
-            df[col].dropna().hist(ax=ax, bins=self.config.histogram_bins, color=palette[i], edgecolor="white", alpha=0.8)
+            df[col].dropna().hist(
+                ax=ax,
+                bins=self.config.histogram_bins,
+                color=palette[i],
+                edgecolor="white",
+                alpha=0.8,
+            )
             ax.set_title(col, fontsize=self.config.label_fontsize, fontweight="bold")
             ax.set_ylabel("Frequency")
 
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Distribution of Numerical Features", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Distribution of Numerical Features",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "histograms", result, "distribution",
-                    "Numerical Histograms",
-                    "Histograms showing the distribution of each numerical feature.")
+        self._save(
+            fig,
+            "histograms",
+            result,
+            "distribution",
+            "Numerical Histograms",
+            "Histograms showing the distribution of each numerical feature.",
+        )
 
     def _kde_plots(
         self,
@@ -232,7 +262,8 @@ class Visualization:
         n = len(num_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -249,11 +280,21 @@ class Visualization:
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Density Estimation (KDE)", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Density Estimation (KDE)",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "kde_plots", result, "distribution",
-                    "KDE Plots",
-                    "Kernel density estimation for each numerical feature.")
+        self._save(
+            fig,
+            "kde_plots",
+            result,
+            "distribution",
+            "KDE Plots",
+            "Kernel density estimation for each numerical feature.",
+        )
 
     # ------------------------------------------------------------------
     # Comparison plots
@@ -272,7 +313,8 @@ class Visualization:
         n = len(num_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -286,11 +328,21 @@ class Visualization:
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Boxplots of Numerical Features", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Boxplots of Numerical Features",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "boxplots", result, "comparison",
-                    "Boxplots",
-                    "Boxplots showing spread, median, and outliers for each numerical feature.")
+        self._save(
+            fig,
+            "boxplots",
+            result,
+            "comparison",
+            "Boxplots",
+            "Boxplots showing spread, median, and outliers for each numerical feature.",
+        )
 
     def _violin_plots(
         self,
@@ -305,7 +357,8 @@ class Visualization:
         n = len(num_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -319,11 +372,18 @@ class Visualization:
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Violin Plots", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Violin Plots", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02
+        )
         fig.tight_layout()
-        self._save(fig, "violin_plots", result, "comparison",
-                    "Violin Plots",
-                    "Violin plots showing distribution shape and density for numerical features.")
+        self._save(
+            fig,
+            "violin_plots",
+            result,
+            "comparison",
+            "Violin Plots",
+            "Violin plots showing distribution shape and density for numerical features.",
+        )
 
     def _countplots(
         self,
@@ -339,7 +399,8 @@ class Visualization:
         n = len(cat_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -347,18 +408,36 @@ class Visualization:
         for i, col in enumerate(cat_cols):
             ax = axes_arr[i]
             order = df[col].value_counts().head(top_n).index
-            sns.countplot(data=df, y=col, ax=ax, order=order, hue=col, palette=self.config.color_palette, legend=False)  # type: ignore[arg-type]
+            sns.countplot(
+                data=df,
+                y=col,
+                ax=ax,
+                order=order,
+                hue=col,
+                palette=self.config.color_palette,
+                legend=False,
+            )  # type: ignore[arg-type]
             ax.set_title(col, fontsize=self.config.label_fontsize, fontweight="bold")
             ax.set_xlabel("Count")
 
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Categorical Feature Counts", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Categorical Feature Counts",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "countplots", result, "comparison",
-                    "Countplots",
-                    f"Top {top_n} value counts for each categorical feature.")
+        self._save(
+            fig,
+            "countplots",
+            result,
+            "comparison",
+            "Countplots",
+            f"Top {top_n} value counts for each categorical feature.",
+        )
 
     # ------------------------------------------------------------------
     # Relationship plots
@@ -384,7 +463,7 @@ class Visualization:
                 if j > i:
                     pairs.append((ca, cb, abs(float(corr.loc[ca, cb]))))  # type: ignore[arg-type]
         pairs.sort(key=lambda x: x[2], reverse=True)
-        top_pairs = pairs[:self.config.max_scatter_pairs]
+        top_pairs = pairs[: self.config.max_scatter_pairs]
 
         if not top_pairs:
             return
@@ -392,7 +471,8 @@ class Visualization:
         ncols = min(n, 2)
         nrows = (n + ncols - 1) // ncols
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -405,11 +485,21 @@ class Visualization:
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Top Correlated Scatterplots", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Top Correlated Scatterplots",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "scatterplots", result, "relationship",
-                    "Scatterplots",
-                    "Scatterplots for the most strongly correlated numeric feature pairs.")
+        self._save(
+            fig,
+            "scatterplots",
+            result,
+            "relationship",
+            "Scatterplots",
+            "Scatterplots for the most strongly correlated numeric feature pairs.",
+        )
 
     def _pairplot(
         self,
@@ -418,7 +508,7 @@ class Visualization:
         result: VisualizationResult,
     ) -> None:
         """Generate a pairplot for up to N numeric columns."""
-        num_cols = profile.numerical_columns[:self.config.pairplot_max_columns]
+        num_cols = profile.numerical_columns[: self.config.pairplot_max_columns]
         if len(num_cols) < 2:
             return
         try:
@@ -428,17 +518,27 @@ class Visualization:
                 diag_kind="kde",
                 plot_kws={"alpha": 0.5, "s": 20},
             )
-            g.fig.suptitle("Pairplot of Numerical Features", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+            g.fig.suptitle(
+                "Pairplot of Numerical Features",
+                fontsize=self.config.title_fontsize,
+                fontweight="bold",
+                y=1.02,
+            )
             if self.config.save_figures and self._fig_dir is not None:
                 path = self._fig_dir / "pairplot.png"
                 g.savefig(path, dpi=self.config.figure_dpi, bbox_inches="tight")
             plt.close(g.fig)
-            result.relationship.append(FigureResult(
-                title="Pairplot", category="relationship",
-                description=f"Pairwise scatterplots and KDE for the first {len(num_cols)} numerical features.",
-                path=self._fig_dir / "pairplot.png" if self.config.save_figures and self._fig_dir else None,
-                filename="pairplot.png",
-            ))
+            result.relationship.append(
+                FigureResult(
+                    title="Pairplot",
+                    category="relationship",
+                    description=f"Pairwise scatterplots and KDE for the first {len(num_cols)} numerical features.",
+                    path=self._fig_dir / "pairplot.png"
+                    if self.config.save_figures and self._fig_dir
+                    else None,
+                    filename="pairplot.png",
+                )
+            )
         except Exception as exc:
             logger.warning("Pairplot failed: %s", exc)
 
@@ -459,16 +559,27 @@ class Visualization:
         fig, ax = plt.subplots(figsize=(self.config.figure_width, self.config.figure_height))
         sizes = sub[cc]
         sizes_norm = (sizes - sizes.min()) / (sizes.max() - sizes.min() + 1e-9) * 500 + 20
-        ax.scatter(sub[ca], sub[cb], s=sizes_norm, alpha=0.5, c=sub[cc], cmap=self.config.color_palette)
+        ax.scatter(
+            sub[ca], sub[cb], s=sizes_norm, alpha=0.5, c=sub[cc], cmap=self.config.color_palette
+        )
         ax.set_xlabel(ca)
         ax.set_ylabel(cb)
-        ax.set_title(f"Bubble Chart: {ca} vs {cb} (size={cc})", fontsize=self.config.title_fontsize, fontweight="bold")
+        ax.set_title(
+            f"Bubble Chart: {ca} vs {cb} (size={cc})",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+        )
         cbar = fig.colorbar(ax.collections[0], ax=ax)
         cbar.set_label(cc)
         fig.tight_layout()
-        self._save(fig, "bubble_chart", result, "relationship",
-                    "Bubble Chart",
-                    f"Bubble chart with {ca} on x-axis, {cb} on y-axis, and {cc} as bubble size.")
+        self._save(
+            fig,
+            "bubble_chart",
+            result,
+            "relationship",
+            "Bubble Chart",
+            f"Bubble chart with {ca} on x-axis, {cb} on y-axis, and {cc} as bubble size.",
+        )
 
     # ------------------------------------------------------------------
     # Matrix plots
@@ -488,16 +599,31 @@ class Visualization:
 
         fig, ax = plt.subplots(figsize=(self.config.figure_width, self.config.figure_height))
         sns.heatmap(
-            data, annot=True, fmt=".2f", cmap="RdBu_r",
-            center=0, vmin=-1, vmax=1,
-            xticklabels=cols, yticklabels=cols, ax=ax,
-            square=True, linewidths=0.5,
+            data,
+            annot=True,
+            fmt=".2f",
+            cmap="RdBu_r",
+            center=0,
+            vmin=-1,
+            vmax=1,
+            xticklabels=cols,
+            yticklabels=cols,
+            ax=ax,
+            square=True,
+            linewidths=0.5,
         )
-        ax.set_title("Pearson Correlation Heatmap", fontsize=self.config.title_fontsize, fontweight="bold")
+        ax.set_title(
+            "Pearson Correlation Heatmap", fontsize=self.config.title_fontsize, fontweight="bold"
+        )
         fig.tight_layout()
-        self._save(fig, "correlation_heatmap", result, "matrix",
-                    "Correlation Heatmap",
-                    "Pearson correlation matrix heatmap for all numerical features.")
+        self._save(
+            fig,
+            "correlation_heatmap",
+            result,
+            "matrix",
+            "Correlation Heatmap",
+            "Pearson correlation matrix heatmap for all numerical features.",
+        )
 
     # ------------------------------------------------------------------
     # Quality plots
@@ -513,12 +639,19 @@ class Visualization:
             return
         fig, ax = plt.subplots(figsize=(self.config.figure_width, self.config.figure_height))
         sns.heatmap(df.isna(), cbar=True, yticklabels=False, cmap="viridis", ax=ax)
-        ax.set_title("Missing Values Heatmap", fontsize=self.config.title_fontsize, fontweight="bold")
+        ax.set_title(
+            "Missing Values Heatmap", fontsize=self.config.title_fontsize, fontweight="bold"
+        )
         ax.set_xlabel("Columns")
         fig.tight_layout()
-        self._save(fig, "missing_heatmap", result, "quality",
-                    "Missing Values Heatmap",
-                    "Yellow stripes indicate missing values in each column.")
+        self._save(
+            fig,
+            "missing_heatmap",
+            result,
+            "quality",
+            "Missing Values Heatmap",
+            "Yellow stripes indicate missing values in each column.",
+        )
 
     def _outlier_visualisation(
         self,
@@ -533,7 +666,8 @@ class Visualization:
         n = len(num_cols)
         nrows, ncols = self._grid_layout(n)
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -541,17 +675,34 @@ class Visualization:
 
         for i, col in enumerate(num_cols):
             ax = axes_arr[i]
-            sns.boxplot(data=df, y=col, ax=ax, color=palette[i], flierprops={"marker": "o", "markersize": 4})
-            ax.set_title(f"{col} (outliers highlighted)", fontsize=self.config.label_fontsize, fontweight="bold")
+            sns.boxplot(
+                data=df,
+                y=col,
+                ax=ax,
+                color=palette[i],
+                flierprops={"marker": "o", "markersize": 4},
+            )
+            ax.set_title(
+                f"{col} (outliers highlighted)",
+                fontsize=self.config.label_fontsize,
+                fontweight="bold",
+            )
 
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle("Outlier Visualisation", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            "Outlier Visualisation", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02
+        )
         fig.tight_layout()
-        self._save(fig, "outlier_visualisation", result, "quality",
-                    "Outlier Visualisation",
-                    "Boxplots with outlier points highlighted for each numerical feature.")
+        self._save(
+            fig,
+            "outlier_visualisation",
+            result,
+            "quality",
+            "Outlier Visualisation",
+            "Boxplots with outlier points highlighted for each numerical feature.",
+        )
 
     # ------------------------------------------------------------------
     # Time-series plots
@@ -573,7 +724,8 @@ class Visualization:
         ncols = min(n, 2)
         nrows = (n + ncols - 1) // ncols
         fig, axes = plt.subplots(
-            nrows, ncols,
+            nrows,
+            ncols,
             figsize=(self.config.figure_width, self.config.figure_height * nrows / 2),
         )
         axes_arr = np.array(axes).flatten() if n > 1 else [axes]
@@ -589,8 +741,18 @@ class Visualization:
         for j in range(n, len(axes_arr)):
             axes_arr[j].set_visible(False)
 
-        fig.suptitle(f"Time Series (indexed by {date_col})", fontsize=self.config.title_fontsize, fontweight="bold", y=1.02)
+        fig.suptitle(
+            f"Time Series (indexed by {date_col})",
+            fontsize=self.config.title_fontsize,
+            fontweight="bold",
+            y=1.02,
+        )
         fig.tight_layout()
-        self._save(fig, "timeseries", result, "timeseries",
-                    "Time Series Plots",
-                    f"Line plots of numerical features over {date_col}.")
+        self._save(
+            fig,
+            "timeseries",
+            result,
+            "timeseries",
+            "Time Series Plots",
+            f"Line plots of numerical features over {date_col}.",
+        )

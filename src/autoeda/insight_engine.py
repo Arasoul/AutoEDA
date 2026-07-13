@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Result dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class Insight:
     """A single data-driven business insight.
@@ -138,6 +139,7 @@ class InsightResult:
 # Engine
 # ---------------------------------------------------------------------------
 
+
 class InsightEngine:
     """Generate rule-based business insights from EDA results.
 
@@ -197,7 +199,9 @@ class InsightEngine:
         )
         logger.info(
             "Generated %d insights, %d recommendations, %d viz suggestions",
-            len(insights), len(recs), len(viz_recs),
+            len(insights),
+            len(recs),
+            len(viz_recs),
         )
         return result
 
@@ -212,30 +216,34 @@ class InsightEngine:
         for s in profile.numerical_stats:
             if abs(s.skewness) > skew_thresh:
                 direction = "right" if s.skewness > 0 else "left"
-                insights.append(Insight(
-                    category="distribution",
-                    severity="warning",
-                    title=f"'{s.column}' is {direction}-skewed (skewness={s.skewness:.2f})",
-                    detail=(
-                        f"The distribution of '{s.column}' is heavily "
-                        f"skewed to the {direction} with a skewness of {s.skewness:.2f}. "
-                        f"Mean ({s.mean:.2f}) differs from median ({s.median:.2f}). "
-                        f"Consider a log or Box-Cox transformation for modelling."
-                    ),
-                    source_metric=f"NumericalColumnStats({s.column}).skewness={s.skewness:.4f}",
-                ))
+                insights.append(
+                    Insight(
+                        category="distribution",
+                        severity="warning",
+                        title=f"'{s.column}' is {direction}-skewed (skewness={s.skewness:.2f})",
+                        detail=(
+                            f"The distribution of '{s.column}' is heavily "
+                            f"skewed to the {direction} with a skewness of {s.skewness:.2f}. "
+                            f"Mean ({s.mean:.2f}) differs from median ({s.median:.2f}). "
+                            f"Consider a log or Box-Cox transformation for modelling."
+                        ),
+                        source_metric=f"NumericalColumnStats({s.column}).skewness={s.skewness:.4f}",
+                    )
+                )
             if s.zero_pct > 20:
-                insights.append(Insight(
-                    category="distribution",
-                    severity="warning",
-                    title=f"'{s.column}' has {s.zero_pct:.1f}% zero values",
-                    detail=(
-                        f"Column '{s.column}' contains {s.n_zeros} zero values "
-                        f"({s.zero_pct:.1f}% of non-null entries). This may indicate "
-                        f"inflated zeros or data quality issues."
-                    ),
-                    source_metric=f"NumericalColumnStats({s.column}).zero_pct={s.zero_pct}",
-                ))
+                insights.append(
+                    Insight(
+                        category="distribution",
+                        severity="warning",
+                        title=f"'{s.column}' has {s.zero_pct:.1f}% zero values",
+                        detail=(
+                            f"Column '{s.column}' contains {s.n_zeros} zero values "
+                            f"({s.zero_pct:.1f}% of non-null entries). This may indicate "
+                            f"inflated zeros or data quality issues."
+                        ),
+                        source_metric=f"NumericalColumnStats({s.column}).zero_pct={s.zero_pct}",
+                    )
+                )
         return insights
 
     # ------------------------------------------------------------------
@@ -249,36 +257,39 @@ class InsightEngine:
         np_threshold = self.config.near_perfect_correlation_threshold
 
         strong_pairs = [
-            p for p in stats.pearson.significant_pairs
-            if abs(p.coefficient) >= threshold
+            p for p in stats.pearson.significant_pairs if abs(p.coefficient) >= threshold
         ]
         if strong_pairs:
             top = max(strong_pairs, key=lambda p: abs(p.coefficient))
-            insights.append(Insight(
-                category="correlation",
-                severity="info",
-                title=f"{len(strong_pairs)} strong correlation(s) detected",
-                detail=(
-                    f"Found {len(strong_pairs)} pairs with |r| >= {threshold}. "
-                    f"Strongest: {top.col_a} <-> {top.col_b} "
-                    f"(r={top.coefficient:.4f}, p={top.p_value:.6f})."
-                ),
-                source_metric=f"CorrelationResult(pearson).significant_pairs (|r| >= {threshold})",
-            ))
+            insights.append(
+                Insight(
+                    category="correlation",
+                    severity="info",
+                    title=f"{len(strong_pairs)} strong correlation(s) detected",
+                    detail=(
+                        f"Found {len(strong_pairs)} pairs with |r| >= {threshold}. "
+                        f"Strongest: {top.col_a} <-> {top.col_b} "
+                        f"(r={top.coefficient:.4f}, p={top.p_value:.6f})."
+                    ),
+                    source_metric=f"CorrelationResult(pearson).significant_pairs (|r| >= {threshold})",
+                )
+            )
 
         for p in strong_pairs:
             if abs(p.coefficient) >= np_threshold:
-                insights.append(Insight(
-                    category="correlation",
-                    severity="warning",
-                    title=f"Near-perfect correlation: {p.col_a} <-> {p.col_b}",
-                    detail=(
-                        f"Variables '{p.col_a}' and '{p.col_b}' show a "
-                        f"near-perfect correlation (r={p.coefficient:.4f}). "
-                        f"This may indicate redundancy or multicollinearity."
-                    ),
-                    source_metric=f"CorrelationPair({p.col_a}, {p.col_b}, r={p.coefficient})",
-                ))
+                insights.append(
+                    Insight(
+                        category="correlation",
+                        severity="warning",
+                        title=f"Near-perfect correlation: {p.col_a} <-> {p.col_b}",
+                        detail=(
+                            f"Variables '{p.col_a}' and '{p.col_b}' show a "
+                            f"near-perfect correlation (r={p.coefficient:.4f}). "
+                            f"This may indicate redundancy or multicollinearity."
+                        ),
+                        source_metric=f"CorrelationPair({p.col_a}, {p.col_b}, r={p.coefficient})",
+                    )
+                )
         return insights
 
     # ------------------------------------------------------------------
@@ -292,30 +303,34 @@ class InsightEngine:
             if s.n_unique == 0:
                 continue
             if s.top_pct > self.config.dominant_category_threshold:
-                insights.append(Insight(
-                    category="categorical",
-                    severity="info",
-                    title=f"'{s.column}' dominated by '{s.top_value}' ({s.top_pct:.1f}%)",
-                    detail=(
-                        f"The category '{s.top_value}' accounts for "
-                        f"{s.top_pct:.1f}% of all values in '{s.column}'. "
-                        f"This heavy concentration may limit the predictive "
-                        f"usefulness of this feature."
-                    ),
-                    source_metric=f"CategoricalColumnStats({s.column}).top_pct={s.top_pct}",
-                ))
+                insights.append(
+                    Insight(
+                        category="categorical",
+                        severity="info",
+                        title=f"'{s.column}' dominated by '{s.top_value}' ({s.top_pct:.1f}%)",
+                        detail=(
+                            f"The category '{s.top_value}' accounts for "
+                            f"{s.top_pct:.1f}% of all values in '{s.column}'. "
+                            f"This heavy concentration may limit the predictive "
+                            f"usefulness of this feature."
+                        ),
+                        source_metric=f"CategoricalColumnStats({s.column}).top_pct={s.top_pct}",
+                    )
+                )
             if s.n_unique > self.config.max_categories:
-                insights.append(Insight(
-                    category="categorical",
-                    severity="warning",
-                    title=f"'{s.column}' has high cardinality ({s.n_unique} unique values)",
-                    detail=(
-                        f"Column '{s.column}' has {s.n_unique} unique values "
-                        f"(unique ratio: {s.unique_ratio:.4f}). High-cardinality "
-                        f"categorical features may need grouping for analysis."
-                    ),
-                    source_metric=f"CategoricalColumnStats({s.column}).n_unique={s.n_unique}",
-                ))
+                insights.append(
+                    Insight(
+                        category="categorical",
+                        severity="warning",
+                        title=f"'{s.column}' has high cardinality ({s.n_unique} unique values)",
+                        detail=(
+                            f"Column '{s.column}' has {s.n_unique} unique values "
+                            f"(unique ratio: {s.unique_ratio:.4f}). High-cardinality "
+                            f"categorical features may need grouping for analysis."
+                        ),
+                        source_metric=f"CategoricalColumnStats({s.column}).n_unique={s.n_unique}",
+                    )
+                )
         return insights
 
     # ------------------------------------------------------------------
@@ -326,13 +341,15 @@ class InsightEngine:
         """Summarise missing data patterns."""
         insights: list[Insight] = []
         if profile.missing_total == 0:
-            insights.append(Insight(
-                category="missing",
-                severity="info",
-                title="No missing values detected",
-                detail="The dataset is complete with no missing values across all columns.",
-                source_metric="DatasetProfile.missing_total=0",
-            ))
+            insights.append(
+                Insight(
+                    category="missing",
+                    severity="info",
+                    title="No missing values detected",
+                    detail="The dataset is complete with no missing values across all columns.",
+                    source_metric="DatasetProfile.missing_total=0",
+                )
+            )
             return insights
 
         crit_thresh = self.config.missing_critical_threshold
@@ -340,43 +357,49 @@ class InsightEngine:
         warn_thresh = self.config.missing_warning_threshold
 
         if profile.missing_pct > crit_thresh:
-            insights.append(Insight(
-                category="missing",
-                severity="critical",
-                title=f"High overall missing data ({profile.missing_pct:.1f}%)",
-                detail=(
-                    f"Total missing cells: {profile.missing_total} "
-                    f"({profile.missing_pct:.1f}% of all data). "
-                    f"This level of missingness may significantly bias analyses."
-                ),
-                source_metric=f"DatasetProfile.missing_pct={profile.missing_pct}",
-            ))
+            insights.append(
+                Insight(
+                    category="missing",
+                    severity="critical",
+                    title=f"High overall missing data ({profile.missing_pct:.1f}%)",
+                    detail=(
+                        f"Total missing cells: {profile.missing_total} "
+                        f"({profile.missing_pct:.1f}% of all data). "
+                        f"This level of missingness may significantly bias analyses."
+                    ),
+                    source_metric=f"DatasetProfile.missing_pct={profile.missing_pct}",
+                )
+            )
 
         for _, row in profile.missing_by_column.head(self.config.max_missing_insights).iterrows():
             col_name = str(row["column"])
             pct = float(row["missing_pct"])
             if pct > drop_thresh:
-                insights.append(Insight(
-                    category="missing",
-                    severity="critical",
-                    title=f"'{col_name}' is >{drop_thresh:.0f}% missing ({pct:.1f}%)",
-                    detail=(
-                        f"Column '{col_name}' has {pct:.1f}% missing values. "
-                        f"Consider dropping this column or imputing carefully."
-                    ),
-                    source_metric=f"missing_by_column({col_name}).missing_pct={pct}",
-                ))
+                insights.append(
+                    Insight(
+                        category="missing",
+                        severity="critical",
+                        title=f"'{col_name}' is >{drop_thresh:.0f}% missing ({pct:.1f}%)",
+                        detail=(
+                            f"Column '{col_name}' has {pct:.1f}% missing values. "
+                            f"Consider dropping this column or imputing carefully."
+                        ),
+                        source_metric=f"missing_by_column({col_name}).missing_pct={pct}",
+                    )
+                )
             elif pct > warn_thresh:
-                insights.append(Insight(
-                    category="missing",
-                    severity="warning",
-                    title=f"'{col_name}' has {pct:.1f}% missing values",
-                    detail=(
-                        f"Column '{col_name}' has {pct:.1f}% missing values. "
-                        f"Imputation or exclusion should be considered."
-                    ),
-                    source_metric=f"missing_by_column({col_name}).missing_pct={pct}",
-                ))
+                insights.append(
+                    Insight(
+                        category="missing",
+                        severity="warning",
+                        title=f"'{col_name}' has {pct:.1f}% missing values",
+                        detail=(
+                            f"Column '{col_name}' has {pct:.1f}% missing values. "
+                            f"Imputation or exclusion should be considered."
+                        ),
+                        source_metric=f"missing_by_column({col_name}).missing_pct={pct}",
+                    )
+                )
         return insights
 
     # ------------------------------------------------------------------
@@ -386,27 +409,27 @@ class InsightEngine:
     def _outlier_insights(self, profile: DatasetProfile) -> list[Insight]:
         """Summarise outlier prevalence across numeric columns."""
         insights: list[Insight] = []
-        cols_with_outliers = [
-            s for s in profile.numerical_stats if s.n_outliers > 0
-        ]
+        cols_with_outliers = [s for s in profile.numerical_stats if s.n_outliers > 0]
         if not cols_with_outliers:
             return insights
 
         worst = max(cols_with_outliers, key=lambda s: s.outlier_pct)
-        insights.append(Insight(
-            category="outlier",
-            severity="warning",
-            title=f"{len(cols_with_outliers)} feature(s) contain outliers",
-            detail=(
-                f"{len(cols_with_outliers)} numeric columns have outliers "
-                f"(IQR method). Highest: '{worst.column}' with "
-                f"{worst.n_outliers} outliers ({worst.outlier_pct:.1f}%)."
-            ),
-            source_metric=(
-                f"NumericalColumnStats({worst.column})."
-                f"n_outliers={worst.n_outliers}, outlier_pct={worst.outlier_pct}"
-            ),
-        ))
+        insights.append(
+            Insight(
+                category="outlier",
+                severity="warning",
+                title=f"{len(cols_with_outliers)} feature(s) contain outliers",
+                detail=(
+                    f"{len(cols_with_outliers)} numeric columns have outliers "
+                    f"(IQR method). Highest: '{worst.column}' with "
+                    f"{worst.n_outliers} outliers ({worst.outlier_pct:.1f}%)."
+                ),
+                source_metric=(
+                    f"NumericalColumnStats({worst.column})."
+                    f"n_outliers={worst.n_outliers}, outlier_pct={worst.outlier_pct}"
+                ),
+            )
+        )
         return insights
 
     # ------------------------------------------------------------------
@@ -424,20 +447,22 @@ class InsightEngine:
         if non_normal:
             max_show = self.config.max_insights_per_category
             cols = ", ".join(f"'{t.column}'" for t in non_normal[:max_show])
-            insights.append(Insight(
-                category="normality",
-                severity="info",
-                title=f"{len(non_normal)} feature(s) are not normally distributed",
-                detail=(
-                    f"Normality tests (Shapiro-Wilk, D'Agostino, KS) rejected "
-                    f"normality for: {cols}. "
-                    f"Parametric tests may be less reliable for these features."
-                ),
-                source_metric=(
-                    f"NormalityResult: n_normal={norm.n_normal}, "
-                    f"n_not_normal={norm.n_not_normal}"
-                ),
-            ))
+            insights.append(
+                Insight(
+                    category="normality",
+                    severity="info",
+                    title=f"{len(non_normal)} feature(s) are not normally distributed",
+                    detail=(
+                        f"Normality tests (Shapiro-Wilk, D'Agostino, KS) rejected "
+                        f"normality for: {cols}. "
+                        f"Parametric tests may be less reliable for these features."
+                    ),
+                    source_metric=(
+                        f"NormalityResult: n_normal={norm.n_normal}, "
+                        f"n_not_normal={norm.n_not_normal}"
+                    ),
+                )
+            )
         return insights
 
     # ------------------------------------------------------------------
@@ -454,31 +479,35 @@ class InsightEngine:
         max_show = self.config.max_insights_per_category
         for t in sig_tests[:max_show]:
             if t.test_name == "chi_square":
-                insights.append(Insight(
-                    category="hypothesis",
-                    severity="info",
-                    title=f"Significant association: {t.column} vs {t.categorical_column}",
-                    detail=(
-                        f"Chi-square test reveals a significant association "
-                        f"between '{t.column}' and '{t.categorical_column}' "
-                        f"(chi2={t.statistic:.4f}, p={t.p_value:.6f})."
-                    ),
-                    source_metric=f"HypothesisTestResult(chi_square, {t.column}, {t.categorical_column})",
-                ))
+                insights.append(
+                    Insight(
+                        category="hypothesis",
+                        severity="info",
+                        title=f"Significant association: {t.column} vs {t.categorical_column}",
+                        detail=(
+                            f"Chi-square test reveals a significant association "
+                            f"between '{t.column}' and '{t.categorical_column}' "
+                            f"(chi2={t.statistic:.4f}, p={t.p_value:.6f})."
+                        ),
+                        source_metric=f"HypothesisTestResult(chi_square, {t.column}, {t.categorical_column})",
+                    )
+                )
             else:
                 groups = f"{t.group_a} vs {t.group_b}" if t.group_a else "multiple groups"
-                insights.append(Insight(
-                    category="hypothesis",
-                    severity="info",
-                    title=f"Significant difference: {t.column} by {t.categorical_column} ({groups})",
-                    detail=(
-                        f"{t.test_name.replace('_', ' ').title()} shows a "
-                        f"significant difference in '{t.column}' across "
-                        f"'{t.categorical_column}' ({groups}, "
-                        f"stat={t.statistic:.4f}, p={t.p_value:.6f})."
-                    ),
-                    source_metric=f"HypothesisTestResult({t.test_name}, {t.column})",
-                ))
+                insights.append(
+                    Insight(
+                        category="hypothesis",
+                        severity="info",
+                        title=f"Significant difference: {t.column} by {t.categorical_column} ({groups})",
+                        detail=(
+                            f"{t.test_name.replace('_', ' ').title()} shows a "
+                            f"significant difference in '{t.column}' across "
+                            f"'{t.categorical_column}' ({groups}, "
+                            f"stat={t.statistic:.4f}, p={t.p_value:.6f})."
+                        ),
+                        source_metric=f"HypothesisTestResult({t.test_name}, {t.column})",
+                    )
+                )
         return insights
 
     # ------------------------------------------------------------------
@@ -499,79 +528,85 @@ class InsightEngine:
 
         # Missing data recommendations
         if profile.missing_pct > self.config.missing_warning_threshold:
-            recs.append(Recommendation(
-                priority="high",
-                title="Address missing data before analysis",
-                detail=(
-                    f"The dataset has {profile.missing_pct:.1f}% missing values. "
-                    f"Use DataPrepToolkit to impute or remove affected rows/columns."
-                ),
-                related_insight="missing_insights",
-            ))
+            recs.append(
+                Recommendation(
+                    priority="high",
+                    title="Address missing data before analysis",
+                    detail=(
+                        f"The dataset has {profile.missing_pct:.1f}% missing values. "
+                        f"Use DataPrepToolkit to impute or remove affected rows/columns."
+                    ),
+                    related_insight="missing_insights",
+                )
+            )
 
         # Skewness recommendations
         skewed = [s for s in profile.numerical_stats if abs(s.skewness) > skew_thresh]
         if skewed:
             cols = ", ".join(f"'{s.column}'" for s in skewed[:max_recs])
-            recs.append(Recommendation(
-                priority="medium",
-                title="Consider transforming skewed features",
-                detail=(
-                    f"Features {cols} are heavily skewed. "
-                    f"Log, square-root, or Box-Cox transformations may improve "
-                    f"distributional properties for downstream modelling."
-                ),
-                related_insight="distribution_insights",
-            ))
+            recs.append(
+                Recommendation(
+                    priority="medium",
+                    title="Consider transforming skewed features",
+                    detail=(
+                        f"Features {cols} are heavily skewed. "
+                        f"Log, square-root, or Box-Cox transformations may improve "
+                        f"distributional properties for downstream modelling."
+                    ),
+                    related_insight="distribution_insights",
+                )
+            )
 
         # Correlation recommendations
-        strong = [
-            p for p in stats.pearson.significant_pairs
-            if abs(p.coefficient) >= np_thresh
-        ]
+        strong = [p for p in stats.pearson.significant_pairs if abs(p.coefficient) >= np_thresh]
         if strong:
-            recs.append(Recommendation(
-                priority="high",
-                title="Investigate near-perfect correlations for redundancy",
-                detail=(
-                    f"{len(strong)} pair(s) show |r| >= {np_thresh}. "
-                    f"Review whether both variables are needed or if one "
-                    f"should be dropped to avoid multicollinearity."
-                ),
-                related_insight="correlation_insights",
-            ))
+            recs.append(
+                Recommendation(
+                    priority="high",
+                    title="Investigate near-perfect correlations for redundancy",
+                    detail=(
+                        f"{len(strong)} pair(s) show |r| >= {np_thresh}. "
+                        f"Review whether both variables are needed or if one "
+                        f"should be dropped to avoid multicollinearity."
+                    ),
+                    related_insight="correlation_insights",
+                )
+            )
 
         # High-cardinality recommendations
         high_card = [
-            s for s in profile.categorical_stats
-            if s.n_unique > self.config.max_categories
+            s for s in profile.categorical_stats if s.n_unique > self.config.max_categories
         ]
         if high_card:
             cols = ", ".join(f"'{s.column}'" for s in high_card[:max_recs])
-            recs.append(Recommendation(
-                priority="medium",
-                title="Group high-cardinality categorical features",
-                detail=(
-                    f"Features {cols} have more than "
-                    f"{self.config.max_categories} unique values. "
-                    f"Consider grouping rare categories or using target encoding."
-                ),
-                related_insight="categorical_insights",
-            ))
+            recs.append(
+                Recommendation(
+                    priority="medium",
+                    title="Group high-cardinality categorical features",
+                    detail=(
+                        f"Features {cols} have more than "
+                        f"{self.config.max_categories} unique values. "
+                        f"Consider grouping rare categories or using target encoding."
+                    ),
+                    related_insight="categorical_insights",
+                )
+            )
 
         # Outlier recommendations
         outlier_cols = [s for s in profile.numerical_stats if s.n_outliers > 0]
         if outlier_cols:
-            recs.append(Recommendation(
-                priority="medium",
-                title="Review outlier treatment strategy",
-                detail=(
-                    f"{len(outlier_cols)} numeric column(s) contain outliers. "
-                    f"Determine whether to cap, transform, or keep them "
-                    f"based on domain knowledge."
-                ),
-                related_insight="outlier_insights",
-            ))
+            recs.append(
+                Recommendation(
+                    priority="medium",
+                    title="Review outlier treatment strategy",
+                    detail=(
+                        f"{len(outlier_cols)} numeric column(s) contain outliers. "
+                        f"Determine whether to cap, transform, or keep them "
+                        f"based on domain knowledge."
+                    ),
+                    related_insight="outlier_insights",
+                )
+            )
 
         return recs[:max_recs]
 
@@ -591,73 +626,88 @@ class InsightEngine:
 
         # Always recommend histograms for numeric data
         if num_cols:
-            recs.append(VisualizationRecommendation(
-                plot_type="Histograms",
-                reason="Reveal distribution shape, central tendency, and spread.",
-                columns=num_cols,
-                priority="high",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Histograms",
+                    reason="Reveal distribution shape, central tendency, and spread.",
+                    columns=num_cols,
+                    priority="high",
+                )
+            )
 
         # Correlation heatmap if >= 3 numeric columns
         if len(num_cols) >= 3:
-            recs.append(VisualizationRecommendation(
-                plot_type="Correlation Heatmap",
-                reason="Identify relationships between all numeric features at a glance.",
-                columns=num_cols,
-                priority="high",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Correlation Heatmap",
+                    reason="Identify relationships between all numeric features at a glance.",
+                    columns=num_cols,
+                    priority="high",
+                )
+            )
 
         # Scatterplots if strong correlations exist
         strong = [
-            p for p in stats.pearson.significant_pairs
+            p
+            for p in stats.pearson.significant_pairs
             if abs(p.coefficient) >= self.config.correlation_threshold
         ]
         if strong:
             cols = list({c for p in strong[:4] for c in (p.col_a, p.col_b)})
-            recs.append(VisualizationRecommendation(
-                plot_type="Scatter Plots",
-                reason=f"{len(strong)} strong correlation(s) detected — scatter plots reveal the nature of these relationships.",
-                columns=cols,
-                priority="high",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Scatter Plots",
+                    reason=f"{len(strong)} strong correlation(s) detected — scatter plots reveal the nature of these relationships.",
+                    columns=cols,
+                    priority="high",
+                )
+            )
 
         # Boxplots for outlier detection
         outlier_cols = [s for s in profile.numerical_stats if s.n_outliers > 0]
         if outlier_cols:
             cols = [s.column for s in outlier_cols]
-            recs.append(VisualizationRecommendation(
-                plot_type="Box Plots",
-                reason=f"{len(cols)} feature(s) contain outliers — box plots visualise their distribution and extremity.",
-                columns=cols,
-                priority="medium",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Box Plots",
+                    reason=f"{len(cols)} feature(s) contain outliers — box plots visualise their distribution and extremity.",
+                    columns=cols,
+                    priority="medium",
+                )
+            )
 
         # Countplots for categorical data
         if cat_cols:
-            recs.append(VisualizationRecommendation(
-                plot_type="Count Plots",
-                reason="Show value distribution across categorical features.",
-                columns=cat_cols,
-                priority="medium",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Count Plots",
+                    reason="Show value distribution across categorical features.",
+                    columns=cat_cols,
+                    priority="medium",
+                )
+            )
 
         # Time series if datetime columns exist
         if profile.datetime_columns and num_cols:
-            recs.append(VisualizationRecommendation(
-                plot_type="Time Series Line Charts",
-                reason="Datetime column detected — temporal trends may exist.",
-                columns=profile.datetime_columns + num_cols[:3],
-                priority="medium",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Time Series Line Charts",
+                    reason="Datetime column detected — temporal trends may exist.",
+                    columns=profile.datetime_columns + num_cols[:3],
+                    priority="medium",
+                )
+            )
 
         # Pairplot for small numeric sets
         if 2 <= len(num_cols) <= 5:
-            recs.append(VisualizationRecommendation(
-                plot_type="Pair Plot",
-                reason="Small number of numeric features — pair plot shows all pairwise relationships.",
-                columns=num_cols,
-                priority="low",
-            ))
+            recs.append(
+                VisualizationRecommendation(
+                    plot_type="Pair Plot",
+                    reason="Small number of numeric features — pair plot shows all pairwise relationships.",
+                    columns=num_cols,
+                    priority="low",
+                )
+            )
 
         return recs
 
@@ -675,33 +725,22 @@ class InsightEngine:
         skew_thresh = self.config.skewness_threshold
         np_thresh = self.config.near_perfect_correlation_threshold
 
-        n_skewed = sum(
-            1 for s in profile.numerical_stats if abs(s.skewness) > skew_thresh
-        )
-        n_outlier = sum(
-            1 for s in profile.numerical_stats if s.n_outliers > 0
-        )
+        n_skewed = sum(1 for s in profile.numerical_stats if abs(s.skewness) > skew_thresh)
+        n_outlier = sum(1 for s in profile.numerical_stats if s.n_outliers > 0)
         n_sig = sum(1 for t in stats.hypothesis_tests if t.significant)
 
         key_findings: list[str] = []
 
         # Health score
         health = profile.health_score
-        key_findings.append(
-            f"Dataset health score: {health.overall}/100 ({health.label})."
-        )
+        key_findings.append(f"Dataset health score: {health.overall}/100 ({health.label}).")
 
         # Missing data
         if profile.missing_pct > 0:
-            key_findings.append(
-                f"{profile.missing_pct:.1f}% of cells are missing."
-            )
+            key_findings.append(f"{profile.missing_pct:.1f}% of cells are missing.")
 
         # Strong correlations with interpretation
-        strong = [
-            p for p in stats.pearson.significant_pairs
-            if abs(p.coefficient) >= np_thresh
-        ]
+        strong = [p for p in stats.pearson.significant_pairs if abs(p.coefficient) >= np_thresh]
         if strong:
             top = max(strong, key=lambda p: abs(p.coefficient))
             key_findings.append(
@@ -712,8 +751,7 @@ class InsightEngine:
         # Skewed features
         if n_skewed:
             skewed_names = [
-                s.column for s in profile.numerical_stats
-                if abs(s.skewness) > skew_thresh
+                s.column for s in profile.numerical_stats if abs(s.skewness) > skew_thresh
             ][:3]
             key_findings.append(
                 f"Skewed distributions: {', '.join(skewed_names)} — "
@@ -722,15 +760,11 @@ class InsightEngine:
 
         # Significant tests
         if n_sig:
-            key_findings.append(
-                f"{n_sig} statistically significant group difference(s) found."
-            )
+            key_findings.append(f"{n_sig} statistically significant group difference(s) found.")
 
         # Outliers
         if n_outlier:
-            key_findings.append(
-                f"{n_outlier} feature(s) contain outliers requiring review."
-            )
+            key_findings.append(f"{n_outlier} feature(s) contain outliers requiring review.")
 
         # Build narrative
         narrative_parts: list[str] = []
@@ -753,16 +787,11 @@ class InsightEngine:
                 f"review issues before deep analysis."
             )
         if strong:
-            narrative_parts.append(
-                f"{len(strong)} strong correlation(s) were identified."
-            )
+            narrative_parts.append(f"{len(strong)} strong correlation(s) were identified.")
         if n_skewed:
-            narrative_parts.append(
-                f"{n_skewed} feature(s) show non-normal distributions."
-            )
+            narrative_parts.append(f"{n_skewed} feature(s) show non-normal distributions.")
         narrative_parts.append(
-            f"The analysis generated {len(insights)} insight(s) and "
-            f"recommendations."
+            f"The analysis generated {len(insights)} insight(s) and recommendations."
         )
         narrative = " ".join(narrative_parts)
 

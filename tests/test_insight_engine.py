@@ -21,6 +21,7 @@ from autoeda.profiler import DataProfiler
 # InsightEngine
 # ---------------------------------------------------------------------------
 
+
 class TestInsightEngine:
     @pytest.fixture()
     def medium_results(self, medium_df):
@@ -187,11 +188,13 @@ class TestInsightEngine:
             assert any(vr.plot_type == "Count Plots" for vr in viz_recs)
 
     def test_viz_recommendations_pairplot(self) -> None:
-        df = pd.DataFrame({
-            "a": np.random.randn(100),
-            "b": np.random.randn(100),
-            "c": np.random.randn(100),
-        })
+        df = pd.DataFrame(
+            {
+                "a": np.random.randn(100),
+                "b": np.random.randn(100),
+                "c": np.random.randn(100),
+            }
+        )
         profile = DataProfiler().profile(df)
         stats = Analytics().analyse(df, profile)
         engine = InsightEngine()

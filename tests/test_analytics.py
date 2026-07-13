@@ -23,6 +23,7 @@ from autoeda.profiler import DataProfiler
 # Correlation interpretation helpers
 # ---------------------------------------------------------------------------
 
+
 class TestInterpretCorrelation:
     def test_very_strong_positive(self) -> None:
         assert "very strong" in _interpret_correlation(0.95)
@@ -67,6 +68,7 @@ class TestInterpretStrengthLabel:
 # ---------------------------------------------------------------------------
 # Analytics
 # ---------------------------------------------------------------------------
+
 
 class TestAnalytics:
     def test_basic_analysis(self, simple_df: pd.DataFrame) -> None:
@@ -163,7 +165,9 @@ class TestAnalytics:
         profile = DataProfiler().profile(simple_df)
         analytics = Analytics()
         result = analytics._hypothesis_tests(
-            simple_df, profile.numerical_columns, [],
+            simple_df,
+            profile.numerical_columns,
+            [],
         )
         assert result == []
 
@@ -177,14 +181,18 @@ class TestAnalytics:
 
     def test_anova_three_groups(self) -> None:
         np.random.seed(42)
-        df = pd.DataFrame({
-            "value": np.concatenate([
-                np.random.randn(30),
-                np.random.randn(30) + 2,
-                np.random.randn(30) + 4,
-            ]),
-            "group": ["A"] * 30 + ["B"] * 30 + ["C"] * 30,
-        })
+        df = pd.DataFrame(
+            {
+                "value": np.concatenate(
+                    [
+                        np.random.randn(30),
+                        np.random.randn(30) + 2,
+                        np.random.randn(30) + 4,
+                    ]
+                ),
+                "group": ["A"] * 30 + ["B"] * 30 + ["C"] * 30,
+            }
+        )
         profile = DataProfiler().profile(df)
         stats = Analytics().analyse(df, profile)
         anova = [t for t in stats.hypothesis_tests if t.test_name == "one_way_anova"]
@@ -192,10 +200,12 @@ class TestAnalytics:
 
     def test_chi_square(self) -> None:
         np.random.seed(42)
-        df = pd.DataFrame({
-            "cat_a": np.random.choice(["X", "Y", "Z"], 100),
-            "cat_b": np.random.choice(["P", "Q"], 100),
-        })
+        df = pd.DataFrame(
+            {
+                "cat_a": np.random.choice(["X", "Y", "Z"], 100),
+                "cat_b": np.random.choice(["P", "Q"], 100),
+            }
+        )
         profile = DataProfiler().profile(df)
         stats = Analytics().analyse(df, profile)
         chi2 = [t for t in stats.hypothesis_tests if t.test_name == "chi_square"]
@@ -205,6 +215,7 @@ class TestAnalytics:
 
     def test_confidence_level_affects_width(self, simple_df: pd.DataFrame) -> None:
         from autoeda.config import AutoEDAConfig
+
         profile = DataProfiler().profile(simple_df)
         narrow = Analytics(AutoEDAConfig(confidence_level=0.90)).analyse(simple_df, profile)
         wide = Analytics(AutoEDAConfig(confidence_level=0.99)).analyse(simple_df, profile)

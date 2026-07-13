@@ -150,18 +150,25 @@ class AutoEDA:
 
         # Phase 4 — visualisations
         results["figures"] = self._visualization.generate_all(
-            df, results["profile"], results["statistics"],
+            df,
+            results["profile"],
+            results["statistics"],
         )
 
         # Phase 5 — business insights
         results["insights"] = self._insight_engine.generate(
-            df, results["profile"], results["statistics"], results["figures"],
+            df,
+            results["profile"],
+            results["statistics"],
+            results["figures"],
         )
 
         # Phase 6 — reports
         results["report_paths"] = self._report_generator.generate(
-            results["profile"], results["statistics"],
-            results["figures"], results["insights"],
+            results["profile"],
+            results["statistics"],
+            results["figures"],
+            results["insights"],
         )
 
         logger.info("EDA pipeline completed successfully")

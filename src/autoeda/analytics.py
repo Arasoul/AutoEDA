@@ -83,6 +83,7 @@ def _interpret_correlation(coefficient: float) -> str:
 # Result dataclasses
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CorrelationPair:
     """A single statistically significant correlation between two columns."""
@@ -182,6 +183,7 @@ class StatisticalAnalysis:
 # Analytics
 # ---------------------------------------------------------------------------
 
+
 class Analytics:
     """Run statistical analyses on a profiled DataFrame.
 
@@ -223,26 +225,39 @@ class Analytics:
         ci = self._confidence_intervals(df, num_cols)
 
         result = StatisticalAnalysis(
-            pearson=pearson, spearman=spearman, kendall=kendall,
-            covariance=cov, normality=norm,
-            hypothesis_tests=hyp, confidence_intervals=ci,
+            pearson=pearson,
+            spearman=spearman,
+            kendall=kendall,
+            covariance=cov,
+            normality=norm,
+            hypothesis_tests=hyp,
+            confidence_intervals=ci,
         )
         logger.info("Statistical analysis complete")
         return result
 
     def _correlation(
-        self, df: pd.DataFrame, num_cols: list[str], method: str,
+        self,
+        df: pd.DataFrame,
+        num_cols: list[str],
+        method: str,
     ) -> CorrelationResult:
         """Compute correlation matrix and extract significant pairs."""
         if len(num_cols) < 2:
             return CorrelationResult(
-                method=method, matrix={}, significant_pairs=[], n_significant=0,
+                method=method,
+                matrix={},
+                significant_pairs=[],
+                n_significant=0,
             )
 
         sub = df[num_cols].dropna()
         if len(sub) < 3:
             return CorrelationResult(
-                method=method, matrix={}, significant_pairs=[], n_significant=0,
+                method=method,
+                matrix={},
+                significant_pairs=[],
+                n_significant=0,
             )
 
         corr_matrix = sub.corr(method=method)  # type: ignore[arg-type]
@@ -266,27 +281,37 @@ class Analytics:
                     sig = p < alpha
                     interp = _interpret_correlation(val)
                     strength = _interpret_strength_label(val)
-                    pairs.append(CorrelationPair(
-                        col_a=ca, col_b=cb, method=method,
-                        coefficient=round(val, 4),
-                        p_value=round(float(p), 6),
-                        significant=sig,
-                        interpretation=interp,
-                        strength_label=strength,
-                    ))
+                    pairs.append(
+                        CorrelationPair(
+                            col_a=ca,
+                            col_b=cb,
+                            method=method,
+                            coefficient=round(val, 4),
+                            p_value=round(float(p), 6),
+                            significant=sig,
+                            interpretation=interp,
+                            strength_label=strength,
+                        )
+                    )
 
         sig_count = sum(1 for p in pairs if p.significant)
         logger.info(
             "%s: %d significant pairs out of %d",
-            method.capitalize(), sig_count, len(pairs),
+            method.capitalize(),
+            sig_count,
+            len(pairs),
         )
         return CorrelationResult(
-            method=method, matrix=matrix,
-            significant_pairs=pairs, n_significant=sig_count,
+            method=method,
+            matrix=matrix,
+            significant_pairs=pairs,
+            n_significant=sig_count,
         )
 
     def _covariance(
-        self, df: pd.DataFrame, num_cols: list[str],
+        self,
+        df: pd.DataFrame,
+        num_cols: list[str],
     ) -> CovarianceResult:
         """Compute covariance matrix."""
         if len(num_cols) < 2:
@@ -306,7 +331,9 @@ class Analytics:
         return CovarianceResult(matrix=matrix, variances=variances)
 
     def _normality(
-        self, df: pd.DataFrame, num_cols: list[str],
+        self,
+        df: pd.DataFrame,
+        num_cols: list[str],
     ) -> NormalityResult:
         """Run normality tests on every numeric column."""
         tests: list[NormalityTest] = []
@@ -345,28 +372,33 @@ class Analytics:
             else:
                 k_stat, k_p = float("nan"), float("nan")
 
-            is_normal = all(
-                p >= alpha for p in (s_p, d_p, k_p) if not np.isnan(p)
-            )
+            is_normal = all(p >= alpha for p in (s_p, d_p, k_p) if not np.isnan(p))
 
-            tests.append(NormalityTest(
-                column=col,
-                shapiro_stat=round(float(s_stat), 4),
-                shapiro_p=round(float(s_p), 6),
-                dagostino_stat=round(float(d_stat), 4),
-                dagostino_p=round(float(d_p), 6),
-                ks_stat=round(float(k_stat), 4),
-                ks_p=round(float(k_p), 6),
-                is_normal=is_normal,
-            ))
+            tests.append(
+                NormalityTest(
+                    column=col,
+                    shapiro_stat=round(float(s_stat), 4),
+                    shapiro_p=round(float(s_p), 6),
+                    dagostino_stat=round(float(d_stat), 4),
+                    dagostino_p=round(float(d_p), 6),
+                    ks_stat=round(float(k_stat), 4),
+                    ks_p=round(float(k_p), 6),
+                    is_normal=is_normal,
+                )
+            )
 
         n_normal = sum(1 for t in tests if t.is_normal)
         return NormalityResult(
-            tests=tests, n_normal=n_normal, n_not_normal=len(tests) - n_normal,
+            tests=tests,
+            n_normal=n_normal,
+            n_not_normal=len(tests) - n_normal,
         )
 
     def _hypothesis_tests(
-        self, df: pd.DataFrame, num_cols: list[str], cat_cols: list[str],
+        self,
+        df: pd.DataFrame,
+        num_cols: list[str],
+        cat_cols: list[str],
     ) -> list[HypothesisTestResult]:
         """Run appropriate hypothesis tests for each num x cat pair."""
         results: list[HypothesisTestResult] = []
@@ -398,15 +430,19 @@ class Analytics:
                         else f"No significant difference in '{num_col}' "
                         f"between '{group_names[0]}' and '{group_names[1]}'."
                     )
-                    results.append(HypothesisTestResult(
-                        test_name="independent_t_test",
-                        statistic=round(float(stat), 4),
-                        p_value=round(float(p), 6),
-                        significant=p < alpha,
-                        column=num_col, categorical_column=cat_col,
-                        group_a=group_names[0], group_b=group_names[1],
-                        interpretation=interp,
-                    ))
+                    results.append(
+                        HypothesisTestResult(
+                            test_name="independent_t_test",
+                            statistic=round(float(stat), 4),
+                            p_value=round(float(p), 6),
+                            significant=p < alpha,
+                            column=num_col,
+                            categorical_column=cat_col,
+                            group_a=group_names[0],
+                            group_b=group_names[1],
+                            interpretation=interp,
+                        )
+                    )
                 elif len(groups) > 2:
                     stat, p = sp_stats.f_oneway(*groups)
                     interp = (
@@ -416,17 +452,20 @@ class Analytics:
                         else f"No significant difference in '{num_col}' "
                         f"across groups of '{cat_col}'."
                     )
-                    results.append(HypothesisTestResult(
-                        test_name="one_way_anova",
-                        statistic=round(float(stat), 4),
-                        p_value=round(float(p), 6),
-                        significant=p < alpha,
-                        column=num_col, categorical_column=cat_col,
-                        interpretation=interp,
-                    ))
+                    results.append(
+                        HypothesisTestResult(
+                            test_name="one_way_anova",
+                            statistic=round(float(stat), 4),
+                            p_value=round(float(p), 6),
+                            significant=p < alpha,
+                            column=num_col,
+                            categorical_column=cat_col,
+                            interpretation=interp,
+                        )
+                    )
 
         for i, cat_a in enumerate(cat_cols):
-            for cat_b in cat_cols[i + 1:]:
+            for cat_b in cat_cols[i + 1 :]:
                 contingency = pd.crosstab(df[cat_a], df[cat_b])
                 if contingency.shape[0] < 2 or contingency.shape[1] < 2:
                     continue
@@ -437,20 +476,25 @@ class Analytics:
                     if p < alpha
                     else f"No significant association between '{cat_a}' and '{cat_b}'."
                 )
-                results.append(HypothesisTestResult(
-                    test_name="chi_square",
-                    statistic=round(float(chi2), 4),
-                    p_value=round(float(p), 6),
-                    significant=p < alpha,
-                    column=cat_a, categorical_column=cat_b,
-                    interpretation=interp,
-                ))
+                results.append(
+                    HypothesisTestResult(
+                        test_name="chi_square",
+                        statistic=round(float(chi2), 4),
+                        p_value=round(float(p), 6),
+                        significant=p < alpha,
+                        column=cat_a,
+                        categorical_column=cat_b,
+                        interpretation=interp,
+                    )
+                )
 
         logger.info("Hypothesis tests: %d performed", len(results))
         return results
 
     def _confidence_intervals(
-        self, df: pd.DataFrame, num_cols: list[str],
+        self,
+        df: pd.DataFrame,
+        num_cols: list[str],
     ) -> list[ConfidenceIntervalResult]:
         """Compute confidence intervals for the mean of each numeric column."""
         results: list[ConfidenceIntervalResult] = []
@@ -465,13 +509,16 @@ class Analytics:
             se = float(s.std(ddof=1)) / np.sqrt(n)
             z = sp_stats.t.ppf((1 + cl) / 2, df=n - 1)
             margin = z * se
-            results.append(ConfidenceIntervalResult(
-                column=col, confidence_level=cl,
-                mean=round(mean, 4),
-                lower=round(mean - margin, 4),
-                upper=round(mean + margin, 4),
-                margin_of_error=round(margin, 4),
-            ))
+            results.append(
+                ConfidenceIntervalResult(
+                    column=col,
+                    confidence_level=cl,
+                    mean=round(mean, 4),
+                    lower=round(mean - margin, 4),
+                    upper=round(mean + margin, 4),
+                    margin_of_error=round(margin, 4),
+                )
+            )
 
         logger.info("Confidence intervals: %d computed", len(results))
         return results

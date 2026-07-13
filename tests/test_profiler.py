@@ -21,6 +21,7 @@ from autoeda.profiler import (
 # classify_variables
 # ---------------------------------------------------------------------------
 
+
 class TestClassifyVariables:
     def test_numeric_detection(self, simple_df: pd.DataFrame) -> None:
         variables = classify_variables(simple_df)
@@ -31,7 +32,22 @@ class TestClassifyVariables:
         assert age.suggested_role == "feature"
 
     def test_categorical_detection(self) -> None:
-        df = pd.DataFrame({"color": ["red", "blue", "green", "red", "blue", "green", "red", "blue", "green", "red"]})
+        df = pd.DataFrame(
+            {
+                "color": [
+                    "red",
+                    "blue",
+                    "green",
+                    "red",
+                    "blue",
+                    "green",
+                    "red",
+                    "blue",
+                    "green",
+                    "red",
+                ]
+            }
+        )
         variables = classify_variables(df)
         cat = next(v for v in variables if v.column == "color")
         assert cat.semantic_type == "categorical"
@@ -86,9 +102,11 @@ class TestClassifyVariables:
         assert v.unique_ratio == pytest.approx(1.0, abs=0.01)
 
     def test_is_identifier_requires_numeric(self) -> None:
-        df = pd.DataFrame({
-            "str_id": [f"item_{i}" for i in range(50)],
-        })
+        df = pd.DataFrame(
+            {
+                "str_id": [f"item_{i}" for i in range(50)],
+            }
+        )
         variables = classify_variables(df)
         v = variables[0]
         assert v.is_identifier is False  # string, not numeric
@@ -98,13 +116,16 @@ class TestClassifyVariables:
 # compute_health_score
 # ---------------------------------------------------------------------------
 
+
 class TestComputeHealthScore:
     def test_perfect_dataset(self) -> None:
-        df = pd.DataFrame({
-            "a": range(200),
-            "b": np.random.randn(200),
-            "c": np.random.choice(["X", "Y"], 200),
-        })
+        df = pd.DataFrame(
+            {
+                "a": range(200),
+                "b": np.random.randn(200),
+                "c": np.random.choice(["X", "Y"], 200),
+            }
+        )
         variables = classify_variables(df)
         score = compute_health_score(df, variables)
         assert isinstance(score, HealthScore)
@@ -124,10 +145,12 @@ class TestComputeHealthScore:
         assert "constant" in issues_text
 
     def test_identifier_columns_flagged(self) -> None:
-        df = pd.DataFrame({
-            "id": range(50),
-            "value": np.random.randn(50),
-        })
+        df = pd.DataFrame(
+            {
+                "id": range(50),
+                "value": np.random.randn(50),
+            }
+        )
         variables = classify_variables(df)
         score = compute_health_score(df, variables)
         issues_text = " ".join(score.issues).lower()
@@ -161,9 +184,14 @@ class TestComputeHealthScore:
 
     def test_label_excellent(self) -> None:
         score = HealthScore(
-            overall=95, label="Excellent", completeness=100,
-            uniqueness=100, consistency=100, analysis_readiness=80,
-            issues=[], strengths=[],
+            overall=95,
+            label="Excellent",
+            completeness=100,
+            uniqueness=100,
+            consistency=100,
+            analysis_readiness=80,
+            issues=[],
+            strengths=[],
         )
         assert score.label == "Excellent"
 
@@ -171,6 +199,7 @@ class TestComputeHealthScore:
 # ---------------------------------------------------------------------------
 # DataProfiler
 # ---------------------------------------------------------------------------
+
 
 class TestDataProfiler:
     def test_basic_profile(self, simple_df: pd.DataFrame) -> None:
@@ -224,9 +253,7 @@ class TestDataProfiler:
 
     def test_outlier_detection(self, medium_df: pd.DataFrame) -> None:
         profile = DataProfiler().profile(medium_df)
-        rev_stats = next(
-            (s for s in profile.numerical_stats if s.column == "revenue"), None
-        )
+        rev_stats = next((s for s in profile.numerical_stats if s.column == "revenue"), None)
         assert rev_stats is not None
         assert rev_stats.n_outliers > 0
 
@@ -237,6 +264,7 @@ class TestDataProfiler:
 
     def test_custom_config(self, simple_df: pd.DataFrame) -> None:
         from autoeda.config import AutoEDAConfig
+
         cfg = AutoEDAConfig(figure_dpi=72)
         profiler = DataProfiler(cfg)
         profile = profiler.profile(simple_df)

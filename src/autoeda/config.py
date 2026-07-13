@@ -193,9 +193,6 @@ class AutoEDAConfig:
         supported = {"html", "pdf", "markdown"}
         for fmt in self.report_formats:
             if fmt not in supported:
-                msg = (
-                    f"Unsupported report format '{fmt}'. "
-                    f"Choose from: {sorted(supported)}"
-                )
+                msg = f"Unsupported report format '{fmt}'. Choose from: {sorted(supported)}"
                 raise ValueError(msg)
         logger.debug("AutoEDAConfig initialised: %s", self)

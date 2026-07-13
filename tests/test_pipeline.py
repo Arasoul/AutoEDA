@@ -81,41 +81,49 @@ class TestAutoEDAPipeline:
         assert r.markdown is not None and r.markdown.exists()
 
     def test_pipeline_with_no_categorical(self, tmp_path) -> None:
-        df = pd.DataFrame({
-            "x": np.random.randn(100),
-            "y": np.random.randn(100),
-            "z": np.random.randn(100),
-        })
+        df = pd.DataFrame(
+            {
+                "x": np.random.randn(100),
+                "y": np.random.randn(100),
+                "z": np.random.randn(100),
+            }
+        )
         cfg = AutoEDAConfig(output_dir=tmp_path / "no_cat")
         results = AutoEDA(cfg).run(df)
         assert results["profile"].n_rows == 100
         assert results["profile"].categorical_columns == []
 
     def test_pipeline_with_no_numeric(self, tmp_path) -> None:
-        df = pd.DataFrame({
-            "color": ["red", "blue", "green"] * 30,
-            "size": ["S", "M", "L"] * 30,
-        })
+        df = pd.DataFrame(
+            {
+                "color": ["red", "blue", "green"] * 30,
+                "size": ["S", "M", "L"] * 30,
+            }
+        )
         cfg = AutoEDAConfig(output_dir=tmp_path / "no_num")
         results = AutoEDA(cfg).run(df)
         assert results["profile"].numerical_columns == []
 
     def test_pipeline_small_dataset(self, tmp_path) -> None:
-        df = pd.DataFrame({
-            "a": [1, 2, 3, 4, 5],
-            "b": ["x", "y", "x", "y", "x"],
-        })
+        df = pd.DataFrame(
+            {
+                "a": [1, 2, 3, 4, 5],
+                "b": ["x", "y", "x", "y", "x"],
+            }
+        )
         cfg = AutoEDAConfig(output_dir=tmp_path / "small")
         results = AutoEDA(cfg).run(df)
         assert results["profile"].n_rows == 5
 
     def test_pipeline_with_missing_data(self, tmp_path) -> None:
         np.random.seed(42)
-        df = pd.DataFrame({
-            "a": np.random.randn(100),
-            "b": np.random.randn(100),
-            "cat": np.random.choice(["X", "Y"], 100),
-        })
+        df = pd.DataFrame(
+            {
+                "a": np.random.randn(100),
+                "b": np.random.randn(100),
+                "cat": np.random.choice(["X", "Y"], 100),
+            }
+        )
         df.loc[df.sample(frac=0.20).index, "a"] = np.nan
         cfg = AutoEDAConfig(output_dir=tmp_path / "missing")
         results = AutoEDA(cfg).run(df)

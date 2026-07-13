@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 # Result dataclass
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class ReportResult:
     """Paths to generated report files.
@@ -436,6 +437,7 @@ tr:hover td{background:#f5f7ff}
 # Report Generator
 # ---------------------------------------------------------------------------
 
+
 class ReportGenerator:
     """Generate professional reports from EDA pipeline results.
 
@@ -498,7 +500,9 @@ class ReportGenerator:
         if "html" in self.config.report_formats:
             html_path = self._render_html(ctx, report_dir, base_name)
         if "pdf" in self.config.report_formats:
-            pdf_path = self._render_pdf(html_path or self._render_html(ctx, report_dir, base_name), report_dir, base_name)
+            pdf_path = self._render_pdf(
+                html_path or self._render_html(ctx, report_dir, base_name), report_dir, base_name
+            )
         if "markdown" in self.config.report_formats:
             md_path = self._render_markdown(ctx, report_dir, base_name)
 
@@ -538,8 +542,7 @@ class ReportGenerator:
             from weasyprint import HTML as WeasyHTML
         except ImportError as exc:
             raise ReportGenerationError(
-                "weasyprint is required for PDF generation. "
-                "Install with: pip install weasyprint"
+                "weasyprint is required for PDF generation. Install with: pip install weasyprint"
             ) from exc
 
         pdf_path = report_dir / f"{base_name}.pdf"
@@ -585,7 +588,9 @@ class ReportGenerator:
 
         # Dataset Overview
         _a("## Dataset Overview\n")
-        _a(f"**Health Score:** {profile.health_score.overall}/100 ({profile.health_score.label})\n")
+        _a(
+            f"**Health Score:** {profile.health_score.overall}/100 ({profile.health_score.label})\n"
+        )
         _a("| Metric | Value |")
         _a("|--------|-------|")
         _a(f"| Rows | {profile.n_rows} |")
@@ -601,7 +606,9 @@ class ReportGenerator:
             _a("| Variable | Type | Dtype | Unique | Role |")
             _a("|----------|------|-------|--------|------|")
             for v in profile.variables:
-                _a(f"| {v.column} | {v.semantic_type} | {v.dtype} | {v.n_unique} | {v.suggested_role} |")
+                _a(
+                    f"| {v.column} | {v.semantic_type} | {v.dtype} | {v.n_unique} | {v.suggested_role} |"
+                )
             _a("")
 
         # Numerical
@@ -623,7 +630,9 @@ class ReportGenerator:
             _a("| Feature | Unique | Top Value | Top % | Missing |")
             _a("|---------|--------|-----------|-------|---------|")
             for cs in profile.categorical_stats:
-                _a(f"| {cs.column} | {cs.n_unique} | {cs.top_value} | {cs.top_pct}% | {cs.missing_pct}% |")
+                _a(
+                    f"| {cs.column} | {cs.n_unique} | {cs.top_value} | {cs.top_pct}% | {cs.missing_pct}% |"
+                )
             _a("")
 
         # Correlation

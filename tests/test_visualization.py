@@ -22,21 +22,34 @@ class TestVisualizationResult:
 
     def test_count_property(self) -> None:
         r = VisualizationResult()
-        r.distribution.append(FigureResult(
-            title="t", description="d", category="distribution",
-            path=None, filename="t.png",
-        ))
-        r.comparison.append(FigureResult(
-            title="t2", description="d2", category="comparison",
-            path=None, filename="t2.png",
-        ))
+        r.distribution.append(
+            FigureResult(
+                title="t",
+                description="d",
+                category="distribution",
+                path=None,
+                filename="t.png",
+            )
+        )
+        r.comparison.append(
+            FigureResult(
+                title="t2",
+                description="d2",
+                category="comparison",
+                path=None,
+                filename="t2.png",
+            )
+        )
         assert r.count == 2
 
     def test_all_figures_concatenation(self) -> None:
         r = VisualizationResult()
         fig = FigureResult(
-            title="t", description="d", category="matrix",
-            path=None, filename="t.png",
+            title="t",
+            description="d",
+            category="matrix",
+            path=None,
+            filename="t.png",
         )
         r.matrix.append(fig)
         assert fig in r.all_figures
@@ -50,7 +63,9 @@ class TestVisualization:
         return profile, stats
 
     def test_generate_all_returns_result(
-        self, medium_df, profile_and_stats,
+        self,
+        medium_df,
+        profile_and_stats,
     ) -> None:
         profile, stats = profile_and_stats
         viz = Visualization(AutoEDAConfig(save_figures=False))
@@ -155,7 +170,9 @@ class TestVisualization:
         assert len(pair) >= 1
 
     def test_figure_results_have_required_fields(
-        self, medium_df, profile_and_stats,
+        self,
+        medium_df,
+        profile_and_stats,
     ) -> None:
         profile, stats = profile_and_stats
         viz = Visualization(AutoEDAConfig(save_figures=False))
@@ -168,7 +185,10 @@ class TestVisualization:
             assert fig.filename != ""
 
     def test_save_figures_creates_files(
-        self, medium_df, profile_and_stats, tmp_path,
+        self,
+        medium_df,
+        profile_and_stats,
+        tmp_path,
     ) -> None:
         profile, stats = profile_and_stats
         cfg = AutoEDAConfig(
