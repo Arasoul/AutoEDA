@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/tests-187%20passing-brightgreen.svg" alt="Tests">
   <img src="https://img.shields.io/badge/mypy-passing-blue.svg" alt="Mypy">
   <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT">
-  <img src="https://img.shields.io/badge/version-0.1.0-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-green.svg" alt="Version">
 </p>
 
 <p align="center">
@@ -16,9 +16,11 @@
 <p align="center">
   <a href="#installation">Installation</a> |
   <a href="#quick-start">Quick Start</a> |
+  <a href="#screenshots">Screenshots</a> |
   <a href="#features">Features</a> |
   <a href="#api-reference">API Reference</a> |
-  <a href="#examples">Examples</a>
+  <a href="#examples">Examples</a> |
+  <a href="#version-11-roadmap">Roadmap</a>
 </p>
 
 ---
@@ -30,6 +32,19 @@ Every data analysis project starts the same way: check for missing values, compu
 **AutoEDA** automates the entire exploratory analysis workflow and produces **consulting-firm-quality reports** (Deloitte/PwC style) with a single function call. It focuses purely on EDA — no preprocessing, no machine learning — just fast, deterministic, traceable insights.
 
 Built alongside [DataPrepToolkit](https://github.com/Arasoul/DataPrepToolkit) (preprocessing) to form a complete data analysis toolkit.
+
+## Ecosystem
+
+AutoEDA is the second component of a modular data analysis ecosystem:
+
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| [DataPrepToolkit](https://github.com/Arasoul/DataPrepToolkit) | Data cleaning, imputation, validation, optimization | v1.0.0 |
+| **AutoEDA** | Exploratory data analysis, statistics, visualization, reporting | v1.0.0 |
+| AutoAnalytics | Advanced analytics (planned) | Coming soon |
+| AutoBI | Business intelligence (planned) | Coming soon |
+
+**How they relate:** DataPrepToolkit prepares data (clean, validate, optimize). AutoEDA analyzes data (profile, correlate, visualize, report). Use DataPrepToolkit when your data needs cleaning. Use AutoEDA when your data is ready for analysis. Each library works independently — there is no runtime dependency between them.
 
 ## Overview
 
@@ -54,6 +69,8 @@ For PDF report generation:
 ```bash
 pip install autoeda[pdf]
 ```
+
+> **Note:** WeasyPrint requires system-level dependencies. On Ubuntu/Debian: `sudo apt install libpango-1.0-0 libpangocairo-1.0-0`. On macOS: `brew install pango`. On Windows, WeasyPrint bundles its dependencies. See [WeasyPrint docs](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation) for details.
 
 For development:
 
@@ -86,6 +103,8 @@ results["report_paths"]    # ReportResult — paths to HTML/MD/PDF reports
 The HTML report is saved to `reports/autoeda_report.html` — a self-contained file with inline CSS and base64-encoded charts.
 
 ## Screenshots
+
+AutoEDA generates consulting-firm-quality reports. Here are the key sections:
 
 <p align="center">
   <img src="screenshots/report_1.png" width="90%" alt="KPI Cards, Health Score & Executive Summary"><br>
@@ -322,6 +341,7 @@ AutoEDA/
 │   └── full_workflow.py     # Complete workflow demo
 ├── pyproject.toml
 ├── README.md
+├── RELEASE_NOTES.md
 ├── LICENSE
 ├── CHANGELOG.md
 └── CONTRIBUTING.md
@@ -378,6 +398,54 @@ mypy src/
 - seaborn >= 0.13.0
 - jinja2 >= 3.1.0
 - weasyprint >= 60.0 (optional, for PDF reports — install with `pip install autoeda[pdf]`)
+
+## Tested Dataset Sizes
+
+AutoEDA works with any DataFrame size. The following ranges have been validated:
+
+| Dataset Size | Expected Behavior |
+|-------------|-------------------|
+| < 100 rows | All analyses run. Statistical tests may lack power (health score will flag this). |
+| 100 - 10,000 rows | Optimal range. All features work as expected. |
+| 10,000 - 100,000 rows | Correlation and hypothesis tests may take a few seconds. Figures render normally. |
+| 100,000+ rows | Works but correlation/hypothesis tests scale quadratically with column count. Consider sampling for very wide datasets (100+ columns). |
+
+All analyses are deterministic — running AutoEDA twice on the same DataFrame produces identical results.
+
+## Examples
+
+A complete working example is provided in [`examples/full_workflow.py`](examples/full_workflow.py):
+
+```bash
+python examples/full_workflow.py
+```
+
+This generates a sample dataset, runs the full pipeline, and prints results to the console. Reports are saved to `reports/autoeda_demo/`.
+
+## Version 1.1 Roadmap
+
+Future enhancements planned for the next minor release. No release dates are committed.
+
+### High Priority
+
+- Optional integration with DataPrepToolkit outputs
+- `PipelineResult` typed return object (replacing raw `dict`)
+- Improved large dataset support (chunked processing)
+
+### Medium Priority
+
+- Jupyter notebook examples for interactive use
+- API documentation generation (Sphinx / mkdocstrings)
+- Dependency caching in CI
+- Security scanning in CI (pip-audit / safety)
+- Additional real-world integration tests
+- Configurable visualization generation (select specific figure types)
+
+### Low Priority
+
+- HTML template extraction for customization
+- Visualization helper refactoring
+- CLI interface (only if future demand justifies it)
 
 ## Changelog
 

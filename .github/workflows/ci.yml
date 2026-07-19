@@ -40,4 +40,4 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
-      - run: python -m pytest tests/ -v --tb=short --cov=autoeda --cov-report=term-missing
+      - run: python -m pytest tests/ -v --tb=short --cov=autoeda --cov-report=term-missing --cov-fail-under=85

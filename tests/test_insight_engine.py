@@ -159,10 +159,9 @@ class TestInsightEngine:
         stats = Analytics().analyse(simple_df, profile)
         engine = InsightEngine()
         es = engine._executive_summary(profile, stats, [])
-        assert es.health_score if hasattr(es, "health_score") else True
-        # Just check key_findings has health score info
         health_finding = [f for f in es.key_findings if "health score" in f.lower()]
         assert len(health_finding) > 0
+        assert profile.health_score.label in ("Excellent", "Good", "Fair", "Poor")
 
     def test_viz_recommendations_histograms(self, simple_df) -> None:
         profile = DataProfiler().profile(simple_df)

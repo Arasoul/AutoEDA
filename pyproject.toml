@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autoeda"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Automated Exploratory Data Analysis for professional BI reporting"
 readme = "README.md"
 license = "MIT"
@@ -21,7 +21,7 @@ keywords = [
     "visualization",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
@@ -58,6 +58,9 @@ Homepage = "https://github.com/Arasoul/AutoEDA"
 Repository = "https://github.com/Arasoul/AutoEDA"
 Issues = "https://github.com/Arasoul/AutoEDA/issues"
 
+[tool.hatch.version]
+path = "src/autoeda/_version.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/autoeda"]
 
@@ -90,3 +93,10 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["autoeda"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true

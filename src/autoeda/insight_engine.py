@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from autoeda.analytics import StatisticalAnalysis
     from autoeda.profiler import DatasetProfile
+    from autoeda.visualization import VisualizationResult
 
 logger = logging.getLogger(__name__)
 
@@ -161,7 +162,7 @@ class InsightEngine:
         df: pd.DataFrame,
         profile: DatasetProfile,
         stats: StatisticalAnalysis,
-        figures: object | None = None,
+        figures: VisualizationResult | None = None,
     ) -> InsightResult:
         """Generate all insights from the completed analysis.
 
@@ -169,7 +170,7 @@ class InsightEngine:
             df: The cleaned DataFrame.
             profile: Profiling result from Phase 2.
             stats: Statistical analysis from Phase 3.
-            figures: Visualisation result from Phase 4 (optional).
+            figures: Visualisation result from Phase 4.
 
         Returns:
             An :class:`InsightResult` with insights, recommendations,

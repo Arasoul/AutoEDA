@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-20
+
+### Changed
+
+- Version bumped from 0.1.0 to 1.0.0 for stable release.
+- Single-source versioning via `_version.py` (PEP 561, hatchling dynamic version).
+- Added `py.typed` marker for PEP 561 compliance.
+
+### Fixed
+
+- Fixed weak typing (`object | None`) in `InsightEngine.generate` to use `VisualizationResult | None`.
+
+### Improved
+
+- CI coverage threshold enforced at 85%.
+- README documents ecosystem relationship, tested dataset ranges, and WeasyPrint requirements.
+
 ## [0.1.0] - 2025-07-13
 
 ### Added
